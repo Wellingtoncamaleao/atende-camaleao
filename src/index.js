@@ -56,6 +56,18 @@ app.get('/status', async (req, res) => {
   }
 });
 
+// Setup Evolution sob demanda
+app.post('/setup', async (req, res) => {
+  try {
+    logger.info('Iniciando setup Evolution...');
+    await connectEvolution.initialize();
+    res.json({ status: 'ok', message: 'Evolution inicializada' });
+  } catch (error) {
+    logger.error('Erro no setup:', error.message);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
 // Webhook principal
 app.post('/webhook', async (req, res) => {
   try {
@@ -120,12 +132,7 @@ app.listen(PORT, async () => {
 ========================================
   `);
   
-  // Conectar Evolution se habilitada
-  if (process.env.EVOLUTION_ENABLED === 'true') {
-    setTimeout(() => {
-      connectEvolution.initialize().catch(err => {
-        logger.error('Falha na inicializacao Evolution (nao-fatal):', err.message);
-      });
-    }, 3000);
-  }
+  // Evolution sera inicializada sob demanda (via /setup)
+  // Para evitar crash no startup por falha de conexao
+  logger.info('Use POST /setup para inicializar Evolution API');
 });
