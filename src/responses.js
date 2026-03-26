@@ -39,7 +39,7 @@ Digite o número ou me conte o que precisa! 😊`,
   precos: `📋 TABELA DE PREÇOS 2024
 
 👕 Camisetas Básicas (100% Algodão):
-• 1-10 unidades: R$ 25,00
+• 1-10 unidades: R$ 30,00
 • 11-50 unidades: R$ 22,00
 • 51-100 unidades: R$ 19,00
 • Acima de 100: R$ 17,00
