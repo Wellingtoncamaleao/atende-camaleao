@@ -90,8 +90,8 @@ app.post('/setup', async (req, res) => {
   }
 });
 
-// Webhook principal
-app.post('/webhook', async (req, res) => {
+// Webhook principal - aceita /webhook e /webhook/MESSAGES_UPSERT (webhookByEvents)
+app.post(['/webhook', '/webhook/:event'], async (req, res) => {
   try {
     logger.info('Webhook recebido:', req.body);
     
@@ -99,8 +99,11 @@ app.post('/webhook', async (req, res) => {
     let message = '';
     let from = '';
 
+    // Detectar evento: do body ou da URL (webhookByEvents)
+    const event = req.body.event || (req.params.event ? req.params.event.toLowerCase().replace('_', '.') : '');
+
     // Evolution API v2 - data eh o objeto da mensagem diretamente
-    if (req.body.event === 'messages.upsert') {
+    if (event === 'messages.upsert' || req.params.event === 'MESSAGES_UPSERT') {
       const msg = req.body.data;
       if (!msg || msg.key?.fromMe) {
         return res.json({ status: 'ignored' });

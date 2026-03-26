@@ -68,7 +68,7 @@ class EvolutionAPI {
         webhook: {
           enabled: true,
           url: webhookUrl,
-          webhookByEvents: true,
+          webhookByEvents: false,
           events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
         }
       });
@@ -80,7 +80,7 @@ class EvolutionAPI {
         await this.api.put(`/webhook/set/${INSTANCE_NAME}`, {
           enabled: true,
           url: webhookUrl,
-          webhookByEvents: true,
+          webhookByEvents: false,
           events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
         });
         logger.info('Webhook configurado (formato v1)');
