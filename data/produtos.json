@@ -1,0 +1,59 @@
+{
+  "camisetas": {
+    "basica": {
+      "nome": "Camiseta Básica",
+      "descricao": "100% Algodão, 160g/m²",
+      "cores": 25,
+      "tamanhos": ["PP", "P", "M", "G", "GG", "EXG"],
+      "precos": {
+        "1-10": 25.00,
+        "11-50": 22.00,
+        "51-100": 19.00,
+        "100+": 17.00
+      }
+    },
+    "premium": {
+      "nome": "Camiseta Premium",
+      "descricao": "Algodão Penteado, 190g/m²",
+      "cores": 15,
+      "tamanhos": ["P", "M", "G", "GG", "EXG"],
+      "preco_base": 35.00
+    },
+    "dryfit": {
+      "nome": "Dry-Fit Esportiva",
+      "descricao": "100% Poliéster Dry",
+      "cores": 20,
+      "tamanhos": ["PP", "P", "M", "G", "GG", "EXG", "3XG"],
+      "preco_base": 32.00
+    },
+    "polo": {
+      "nome": "Polo Piquet",
+      "descricao": "50% Algodão, 50% Poliéster",
+      "cores": 18,
+      "tamanhos": ["P", "M", "G", "GG", "EXG"],
+      "preco_base": 45.00
+    }
+  },
+  "personalizacao": {
+    "silk": {
+      "1cor": 3.00,
+      "2cores": 5.00,
+      "3cores": 7.00,
+      "minimo": 20
+    },
+    "bordado": {
+      "ate5cm": 8.00,
+      "ate10cm": 12.00,
+      "ate15cm": 18.00
+    },
+    "sublimacao": {
+      "parcial": 8.00,
+      "total": 15.00
+    },
+    "dtf": {
+      "10x10": 6.00,
+      "a4": 10.00,
+      "a3": 15.00
+    }
+  }
+}
