@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
+const axios = require('axios');
 const logger = require('./logger');
 
 // Carregar base de conhecimento
@@ -15,10 +16,14 @@ try {
   logger.warn('Erro ao carregar conhecimento:', error.message);
 }
 
-// Cliente Claude
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+// Cliente Claude (inicializa sob demanda)
+let anthropic = null;
+function getAnthropic() {
+  if (!anthropic && process.env.ANTHROPIC_API_KEY) {
+    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  }
+  return anthropic;
+}
 
 // Historico por contato (em memoria, limita ultimas 20 msgs)
 const historicos = {};
@@ -34,7 +39,6 @@ function getHistorico(from) {
 function addHistorico(from, role, content) {
   const hist = getHistorico(from);
   hist.push({ role, content });
-  // Manter apenas ultimas N mensagens
   if (hist.length > MAX_HISTORICO) {
     historicos[from] = hist.slice(-MAX_HISTORICO);
   }
@@ -80,48 +84,92 @@ ${conhecimentoTexto}
 5. Para pedidos acima de 100 pecas, diga que precisa consultar com a equipe para melhor preco
 6. Sempre que possivel, conduza a conversa para fechar um orcamento`;
 
-// Funcao principal
+// ========== CLAUDE (primario) ==========
+async function callClaude(historico) {
+  const client = getAnthropic();
+  if (!client) throw new Error('ANTHROPIC_API_KEY nao definida');
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 500,
+    system: SYSTEM_PROMPT,
+    messages: historico
+  });
+
+  return response.content[0].text;
+}
+
+// ========== GEMINI (fallback) ==========
+async function callGemini(historico) {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) throw new Error('GOOGLE_API_KEY nao definida');
+
+  // Converter historico para formato Gemini
+  const contents = historico.map(msg => ({
+    role: msg.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: msg.content }]
+  }));
+
+  const response = await axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents
+    },
+    { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
+  );
+
+  return response.data.candidates[0].content.parts[0].text;
+}
+
+// ========== FUNCAO PRINCIPAL ==========
 async function generateResponse(message, from) {
   logger.info(`Processando: "${message}" de ${from}`);
 
-  // Se nao tem API key, usar fallback simples
-  if (!process.env.ANTHROPIC_API_KEY) {
-    logger.warn('ANTHROPIC_API_KEY nao definida, usando fallback');
-    return fallbackResponse(message);
-  }
+  // Adicionar mensagem do usuario ao historico
+  addHistorico(from, 'user', message);
+  const historico = getHistorico(from);
 
+  let resposta = null;
+  let provider = null;
+
+  // Tentar Claude primeiro
   try {
-    // Adicionar mensagem do usuario ao historico
-    addHistorico(from, 'user', message);
-
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      system: SYSTEM_PROMPT,
-      messages: getHistorico(from)
-    });
-
-    const resposta = response.content[0].text;
-
-    // Adicionar resposta ao historico
-    addHistorico(from, 'assistant', resposta);
-
-    return resposta;
+    resposta = await callClaude(historico);
+    provider = 'claude';
   } catch (error) {
-    logger.error('Erro Claude API:', error.message);
-    // Fallback se a API falhar
-    return fallbackResponse(message);
+    logger.warn(`Claude falhou: ${error.message} — tentando Gemini...`);
   }
+
+  // Fallback: Gemini
+  if (!resposta) {
+    try {
+      resposta = await callGemini(historico);
+      provider = 'gemini';
+    } catch (error) {
+      logger.warn(`Gemini falhou: ${error.message}`);
+    }
+  }
+
+  // Fallback final: resposta estatica
+  if (!resposta) {
+    logger.error('Ambas as APIs falharam, usando fallback estatico');
+    resposta = fallbackResponse(message);
+    provider = 'fallback';
+  }
+
+  logger.info(`Resposta via ${provider} para ${from}`);
+  addHistorico(from, 'assistant', resposta);
+
+  return resposta;
 }
 
-// Fallback simples caso a API esteja indisponivel
+// Fallback estatico
 function fallbackResponse(message) {
   const msg = message.toLowerCase().trim();
-
-  if (msg.match(/^(oi|ola|olá|bom dia|boa tarde|boa noite|opa|ei|e ai|eai|oi)/)) {
+  if (msg.match(/^(oi|ola|olá|bom dia|boa tarde|boa noite|opa|ei|e ai|eai)/)) {
     return 'Oi! Sou a Vivi da Camaleao Camisas! 👋\n\nComo posso ajudar?\n\n1 - Precos\n2 - Orcamento\n3 - Produtos\n4 - Prazos\n5 - Falar com vendedor';
   }
-
   return 'Desculpa, estou com uma instabilidade no momento. Pode tentar novamente em alguns minutos? 🙏';
 }
 
