@@ -8,7 +8,15 @@ dotenv.config();
 
 // Importar módulos
 const { connectEvolution, sendMessage } = require('./evolution');
-const { generateResponse } = require('./responses');
+// Usar v2 se existir, senão usar v1
+let generateResponse;
+try {
+  generateResponse = require('./responses-v2').generateResponse;
+  console.log('✅ Usando responses-v2 (com IA e Redis)');
+} catch (error) {
+  generateResponse = require('./responses').generateResponse;
+  console.log('ℹ️ Usando responses v1 (respostas fixas)');
+}
 const logger = require('./logger');
 
 // Criar app

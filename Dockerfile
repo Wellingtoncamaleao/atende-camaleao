@@ -1,24 +1,27 @@
+# Dockerfile simples e funcional
 FROM node:20-alpine
 
 WORKDIR /app
 
 # Copiar package files
 COPY package*.json ./
-RUN npm install --omit=dev
+
+# Instalar dependências
+RUN npm ci --production
 
 # Copiar código
-COPY . .
+COPY src/ ./src/
+COPY data/ ./data/
 
-# Criar diretórios
-RUN mkdir -p logs data
-
-# Defaults para variaveis de ambiente
-ENV BOT_NAME=Vivi
-ENV BOT_PORT=3000
-ENV EVOLUTION_ENABLED=true
+# Criar diretório de logs
+RUN mkdir -p /app/logs
 
 # Expor porta
 EXPOSE 3000
 
-# Comando - node direto (npm nao repassa signals corretamente)
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+
+# Iniciar aplicação
 CMD ["node", "src/index.js"]

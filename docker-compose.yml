@@ -1,62 +1,36 @@
 version: '3.8'
 
 services:
-  # OpenClaw Agent - Cérebro do sistema
-  openclaw:
-    build: 
-      context: .
-      dockerfile: Dockerfile.openclaw
-    container_name: atende-camaleao-openclaw
-    environment:
-      - OPENCLAW_MODE=agent
-      - AGENT_ID=atende-camaleao
-      - MODEL=anthropic/claude-haiku-4-5
-      - CAMALEAO_API_KEY=${CAMALEAO_API_KEY}
-      - CAMALEAO_API_URL=${CAMALEAO_API_URL}
-      - REDIS_URL=redis://redis:6379
-      - DATABASE_URL=postgresql://camaleao:senha123@postgres:5432/atendimento
-    volumes:
-      - ./agent:/app/agent
-      - ./skills:/app/skills
-      - ./data:/app/data
-      - openclaw-memory:/data/memory
-    depends_on:
-      - redis
-      - postgres
-    restart: unless-stopped
-    networks:
-      - atende-network
-
-  # Bridge Server - Ponte WhatsApp <-> OpenClaw
-  bridge:
-    build:
-      context: .
-      dockerfile: Dockerfile.bridge
-    container_name: atende-camaleao-bridge
+  # Bot principal - código que já funciona
+  bot:
+    build: .
+    container_name: atende-camaleao-bot
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000
-      - OPENCLAW_URL=http://openclaw:8080
-      - OPENCLAW_API_KEY=${OPENCLAW_API_KEY}
+      - NODE_ENV=production
+      - BOT_PORT=3000
       - EVOLUTION_URL=${EVOLUTION_URL}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
       - EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE}
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - BOT_NAME=${BOT_NAME:-Vivi}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+      - CAMALEAO_API_KEY=${CAMALEAO_API_KEY}
       - REDIS_URL=redis://redis:6379
-      - RATE_LIMIT_PER_MIN=30
-      - SESSION_TIMEOUT_MIN=30
     volumes:
-      - ./bridge:/app
+      - ./src:/app/src
+      - ./data:/app/data
       - ./logs:/app/logs
     depends_on:
-      - openclaw
       - redis
     restart: unless-stopped
     networks:
       - atende-network
 
-  # Redis - Cache e Queue
+  # Redis para cache e sessões
   redis:
     image: redis:7-alpine
     container_name: atende-camaleao-redis
@@ -66,45 +40,8 @@ services:
     networks:
       - atende-network
 
-  # PostgreSQL - Histórico e Analytics
-  postgres:
-    image: postgres:15-alpine
-    container_name: atende-camaleao-postgres
-    environment:
-      - POSTGRES_DB=atendimento
-      - POSTGRES_USER=camaleao
-      - POSTGRES_PASSWORD=senha123
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: unless-stopped
-    networks:
-      - atende-network
-
-  # Dashboard Analytics (opcional)
-  dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile.dashboard
-    container_name: atende-camaleao-dashboard
-    ports:
-      - "3001:3001"
-    environment:
-      - DATABASE_URL=postgresql://camaleao:senha123@postgres:5432/atendimento
-      - REDIS_URL=redis://redis:6379
-    volumes:
-      - ./dashboard:/app
-    depends_on:
-      - postgres
-      - redis
-    restart: unless-stopped
-    networks:
-      - atende-network
-
 volumes:
-  openclaw-memory:
   redis-data:
-  postgres-data:
 
 networks:
   atende-network:

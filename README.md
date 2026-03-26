@@ -1,269 +1,185 @@
-# 🤖 Atende Camaleão - Sistema Inteligente de Atendimento
+# 🎨 Atende Camaleão v2.0 - Bot WhatsApp Inteligente
 
-Sistema de atendimento automático via WhatsApp para Camaleão Camisas, powered by OpenClaw AI.
+Bot de atendimento automático via WhatsApp para Camaleão Camisas, agora com IA e sessões persistentes.
 
-## 🧠 Arquitetura Inteligente
+## ✨ O que há de novo na v2.0
 
-Este não é um bot simples com respostas fixas. É um sistema de IA contextual que:
-- **Entende contexto** - Mantém histórico completo da conversa
-- **Acessa dados reais** - Consulta APIs do painel em tempo real
-- **Toma decisões complexas** - Analisa pedidos, calcula prazos, sugere produtos
-- **Aprende continuamente** - Melhora respostas baseado em feedback
-- **Escala inteligentemente** - Sabe quando chamar humano
+- **🧠 IA Integrada**: Gemini, Claude ou OpenAI para respostas inteligentes
+- **💾 Sessões com Redis**: Mantém contexto das conversas
+- **🔌 API Real**: Consulta pedidos direto do painel Camaleão
+- **📊 Cache inteligente**: Respostas mais rápidas
+- **🐳 Docker otimizado**: Deploy simples e confiável
 
-## 🚀 Instalação (Docker Compose)
+## 🚀 Instalação Rápida
+
+### Opção 1: Docker (Recomendado)
 
 ```bash
-# 1. Clone o repositório
+# Clone o repositório
 git clone https://github.com/Wellingtoncamaleao/atende-camaleao.git
 cd atende-camaleao
 
-# 2. Configure as variáveis
+# Configure as variáveis
 cp .env.example .env
-nano .env  # Configure suas credenciais
+nano .env  # Edite com suas chaves
 
-# 3. Inicie o sistema completo
+# Suba o sistema
 docker-compose up -d
 
-# 4. Configure o webhook da Evolution
-curl -X POST http://localhost:3000/setup
+# Veja os logs
+docker-compose logs -f
 ```
 
-## 🔧 Componentes
+### Opção 2: Node.js Direto
 
-### 1. OpenClaw Agent (Cérebro)
-- Motor de IA contextual
-- Memória persistente por cliente
-- Skills especializadas Camaleão
-- Integração com APIs do painel
+```bash
+# Instale as dependências
+npm install
 
-### 2. Bridge Server (Ponte)
-- Recebe webhooks da Evolution API
-- Traduz mensagens para OpenClaw
-- Gerencia sessões por cliente
-- Rate limiting e queue
+# Configure o .env
+cp .env.example .env
+nano .env
 
-### 3. Evolution API (WhatsApp)
-- Conexão com WhatsApp Business
-- Multi-device support
-- Gerenciamento de instâncias
-- Webhook events
-
-## 🎯 Funcionalidades Inteligentes
-
-### Consultas em Tempo Real
-```
-Cliente: "Qual o status do meu pedido 1234?"
-Bot: [Consulta API] "Seu pedido está na impressão, previsão de entrega amanhã às 14h"
+# Inicie o bot
+npm start
 ```
 
-### Orçamento Contextual
-```
-Cliente: "Quero 100 camisetas com logo"
-Bot: "Para camisetas com logo, temos:"
-     - Malha 30.1: R$ 25/un
-     - PV Premium: R$ 35/un
-     "Qual tecido prefere?"
-Cliente: "A mais barata"
-Bot: "100 camisetas malha 30.1 = R$ 2.500"
-     "Prazo de 5 dias úteis. Confirma?"
-```
+## ⚙️ Configuração
 
-### Memória de Cliente
-```
-Cliente: "Oi"
-Bot: "Olá João! Vi que seu último pedido foi entregue ontem."
-     "Ficou satisfeito com as camisetas do evento?"
-```
+### Variáveis Essenciais (.env)
 
-## 📊 APIs Integradas
-
-- `/api/v1/pedidos.php` - Consulta status de pedidos
-- `/api/v1/estoque.php` - Verifica disponibilidade
-- `/api/v1/clientes.php` - Histórico do cliente
-- `/api/v1/produtos.php` - Catálogo e preços
-- `/api/v1/prazo.php` - Cálculo de prazos
-
-## ⚙️ Configuração Avançada
-
-### .env Principal
 ```env
-# OpenClaw
-OPENCLAW_API_KEY=oc_xxx
-OPENCLAW_AGENT_ID=atende-camaleao
-OPENCLAW_MODEL=anthropic/claude-haiku-4-5
-
-# Evolution API
+# Evolution API (Obrigatório)
 EVOLUTION_URL=https://evolution.gestorconecta.com.br
-EVOLUTION_API_KEY=xxx
+EVOLUTION_API_KEY=sua_chave_aqui
 EVOLUTION_INSTANCE=camaleao
 
-# Camaleão API
-CAMALEAO_API_URL=https://painel.camaleaocamisas.com.br/api/v1
+# IA (Opcional - escolha uma ou mais)
+GOOGLE_AI_API_KEY=sua_chave_gemini      # Recomendado (grátis)
+ANTHROPIC_API_KEY=sua_chave_claude      # Alternativa
+OPENAI_API_KEY=sua_chave_openai         # Fallback
+
+# API Camaleão (Opcional - para consultas reais)
 CAMALEAO_API_KEY=oc_a4f6e08fec8e2a64c388daf280aba64b93788206da2caa52a20b84433105e0f9
 
-# Bridge Server
-BRIDGE_PORT=3000
-WEBHOOK_SECRET=xxx
-RATE_LIMIT_PER_MIN=30
+# Redis (Opcional - para cache)
+REDIS_URL=redis://redis:6379
 ```
 
-### Skills Customizadas
+## 🎯 Funcionalidades
 
-Criar arquivo em `skills/`:
-```javascript
-// skills/consulta-pedido.js
-module.exports = {
-  name: 'consulta-pedido',
-  description: 'Consulta status de pedido',
-  pattern: /pedido|status|entrega/i,
-  async execute(context, apis) {
-    const pedidoId = context.extractNumber();
-    if (!pedidoId) {
-      return "Por favor, informe o número do pedido.";
-    }
-    
-    const pedido = await apis.camaleao.getPedido(pedidoId);
-    if (!pedido) {
-      return "Pedido não encontrado. Verifique o número.";
-    }
-    
-    return `📦 Pedido #${pedidoId}
-Status: ${pedido.status}
-Cliente: ${pedido.cliente}
-Valor: R$ ${pedido.valor}
-Prazo: ${pedido.prazo}
-${pedido.observacoes || ''}`;
-  }
-};
+### Menu Principal
+1️⃣ **Tabela de preços** - Valores atualizados  
+2️⃣ **Fazer orçamento** - Cálculo automático com descontos  
+3️⃣ **Consultar pedido** - Status em tempo real (se API configurada)  
+4️⃣ **Ver produtos** - Catálogo completo  
+5️⃣ **Falar com vendedor** - Escalonamento humano  
+6️⃣ **Horários e contatos** - Informações da loja  
+
+### Recursos Inteligentes
+
+- **Contexto de Conversa**: Lembra do cliente e histórico
+- **Respostas com IA**: Quando não entende, usa IA para responder
+- **Cálculo de Descontos**: Automático baseado em quantidade
+- **Multi-idioma**: Responde em português, mas entende outros idiomas
+
+## 📊 Arquitetura
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────┐
+│  WhatsApp   │────▶│ Evolution API│────▶│   Bot   │
+└─────────────┘     └──────────────┘     └────┬────┘
+                                              │
+                    ┌─────────────────────────┴────────┐
+                    │                                   │
+              ┌─────▼─────┐                    ┌───────▼──────┐
+              │   Redis   │                    │      IA      │
+              │  (Cache)  │                    │(Gemini/Claude)│
+              └───────────┘                    └──────────────┘
 ```
 
 ## 🔌 Endpoints
 
-### Bridge Server
-- `GET /` - Status do sistema
+- `GET /` - Status do bot
 - `GET /health` - Health check
-- `POST /webhook` - Recebe eventos Evolution
-- `POST /setup` - Configura webhook Evolution
-- `GET /sessions` - Lista sessões ativas
-- `GET /metrics` - Métricas de atendimento
+- `POST /webhook` - Recebe mensagens da Evolution
+- `GET /status` - Status detalhado
+- `GET /debug` - Informações de debug
 
-### OpenClaw Agent
-- `POST /message` - Processa mensagem
-- `GET /context/:phone` - Recupera contexto
-- `POST /feedback` - Registra feedback
-- `GET /analytics` - Analytics de conversas
+## 🐛 Troubleshooting
+
+### Bot não responde
+
+```bash
+# Verificar logs
+docker-compose logs bot
+
+# Testar webhook
+curl http://localhost:3000/health
+
+# Reiniciar
+docker-compose restart bot
+```
+
+### Redis não conecta
+
+```bash
+# Verificar se Redis está rodando
+docker-compose ps redis
+
+# Ver logs do Redis
+docker-compose logs redis
+```
+
+### IA não funciona
+
+- Verifique se configurou pelo menos uma API key (Gemini/Claude/OpenAI)
+- O bot funciona sem IA, mas com respostas fixas
 
 ## 📈 Monitoramento
 
 ```bash
-# Logs em tempo real
-docker-compose logs -f
+# Ver todas as mensagens processadas
+docker-compose logs -f bot | grep "Webhook recebido"
 
-# Métricas
-curl http://localhost:3000/metrics
-
-# Sessões ativas
-curl http://localhost:3000/sessions
-
-# Status OpenClaw
-curl http://localhost:3000/openclaw/status
-```
-
-## 🛡️ Segurança
-
-- **Rate Limiting** - 30 msgs/min por número
-- **Session Timeout** - 30min inatividade
-- **API Keys** - Todas protegidas
-- **Webhook Secret** - Validação de origem
-- **Data Encryption** - Mensagens criptografadas
-
-## 📱 Fluxo de Atendimento
-
-```mermaid
-graph TD
-    A[WhatsApp] -->|Mensagem| B[Evolution API]
-    B -->|Webhook| C[Bridge Server]
-    C -->|Context| D[OpenClaw Agent]
-    D -->|Query| E[APIs Camaleão]
-    E -->|Data| D
-    D -->|Response| C
-    C -->|Send| B
-    B -->|Reply| A
-```
-
-## 🚨 Troubleshooting
-
-### Bot não responde
-```bash
-# Verificar todos os serviços
+# Status dos containers
 docker-compose ps
 
-# Ver logs do OpenClaw
-docker-compose logs openclaw
-
-# Reiniciar sistema
-docker-compose restart
+# Uso de recursos
+docker stats
 ```
 
-### Respostas lentas
-```bash
-# Verificar fila
-curl http://localhost:3000/queue
-
-# Limpar cache
-docker-compose exec openclaw npm run clear-cache
-```
-
-### Webhook não recebe
-```bash
-# Verificar configuração
-curl http://localhost:3000/webhook/test
-
-# Reconfigurar Evolution
-curl -X POST http://localhost:3000/setup
-```
-
-## 🔄 Updates
+## 🔄 Atualizações
 
 ```bash
-# Atualizar código
+# Baixar atualizações
 git pull
 
-# Rebuild containers
+# Reconstruir imagem
 docker-compose build
 
-# Restart com zero downtime
-docker-compose up -d --no-deps --build openclaw
+# Reiniciar com nova versão
+docker-compose up -d
 ```
-
-## 📊 Analytics Dashboard
-
-Acesse `http://localhost:3000/dashboard` para ver:
-- Mensagens processadas
-- Taxa de resolução
-- Tempo médio de resposta
-- Principais dúvidas
-- Satisfação dos clientes
 
 ## 🤝 Contribuindo
 
-1. Fork o projeto
-2. Crie sua feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
+1. Faça um fork
+2. Crie uma branch (`git checkout -b feature/melhoria`)
+3. Commit suas mudanças (`git commit -am 'Add: nova feature'`)
+4. Push para a branch (`git push origin feature/melhoria`)
 5. Abra um Pull Request
 
 ## 📞 Suporte
 
-- **Técnico**: Wellington Camaleão
 - **WhatsApp**: (11) 94567-8900
 - **Email**: suporte@camaleaocamisas.com.br
+- **Issues**: [GitHub Issues](https://github.com/Wellingtoncamaleao/atende-camaleao/issues)
 
 ## 📜 Licença
 
-Proprietário - Camaleão Camisas © 2024
+MIT - Use como quiser!
 
 ---
 
-**Powered by OpenClaw AI 🧠**
+**Desenvolvido com ❤️ para Camaleão Camisas**
