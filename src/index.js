@@ -17,7 +17,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const PORT = process.env.BOT_PORT || 3000;
-const EVOLUTION_ENABLED = EVOLUTION_ENABLED || !!process.env.EVOLUTION_URL;
+const EVOLUTION_ENABLED = process.env.EVOLUTION_ENABLED === 'true' || !!process.env.EVOLUTION_URL;
 
 // Rota principal
 app.get('/', (req, res) => {
