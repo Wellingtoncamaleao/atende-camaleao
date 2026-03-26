@@ -60,21 +60,33 @@ class EvolutionAPI {
   }
 
   async setWebhook() {
+    const webhookUrl = process.env.WEBHOOK_URL || `http://localhost:${process.env.BOT_PORT}/webhook`;
+    logger.info(`Configurando webhook para: ${webhookUrl}`);
     try {
-      const webhookUrl = process.env.WEBHOOK_URL || `http://localhost:${process.env.BOT_PORT}/webhook`;
-      logger.info('Configurando webhook para:', webhookUrl);
-      await this.api.put(`/webhook/set/${INSTANCE_NAME}`, {
-        enabled: true,
-        url: process.env.WEBHOOK_URL || `http://localhost:${process.env.BOT_PORT}/webhook`,
-        webhookByEvents: true,
-        events: [
-          'MESSAGES_UPSERT',
-          'CONNECTION_UPDATE'
-        ]
+      // Evolution v2 endpoint
+      await this.api.post(`/webhook/set/${INSTANCE_NAME}`, {
+        webhook: {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: true,
+          events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
+        }
       });
-      logger.info('Webhook configurado');
+      logger.info('Webhook configurado com sucesso');
     } catch (error) {
-      logger.warn('Erro ao configurar webhook:', error.message);
+      logger.warn(`Erro webhook v2 (${error.response?.status}): ${JSON.stringify(error.response?.data || error.message)}`);
+      // Tentar formato alternativo (Evolution v1)
+      try {
+        await this.api.put(`/webhook/set/${INSTANCE_NAME}`, {
+          enabled: true,
+          url: webhookUrl,
+          webhookByEvents: true,
+          events: ['MESSAGES_UPSERT', 'CONNECTION_UPDATE']
+        });
+        logger.info('Webhook configurado (formato v1)');
+      } catch (err2) {
+        logger.warn(`Erro webhook v1 tambem (${err2.response?.status}): ${JSON.stringify(err2.response?.data || err2.message)}`);
+      }
     }
   }
 
