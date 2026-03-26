@@ -111,7 +111,7 @@ async function callGemini(historico) {
   }));
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents
@@ -133,21 +133,21 @@ async function generateResponse(message, from) {
   let resposta = null;
   let provider = null;
 
-  // Tentar Claude primeiro
+  // Tentar Gemini primeiro (gratuito)
   try {
-    resposta = await callClaude(historico);
-    provider = 'claude';
+    resposta = await callGemini(historico);
+    provider = 'gemini';
   } catch (error) {
-    logger.warn(`Claude falhou: ${error.message} — tentando Gemini...`);
+    logger.warn(`Gemini falhou: ${error.message} — tentando Claude...`);
   }
 
-  // Fallback: Gemini
+  // Fallback: Claude
   if (!resposta) {
     try {
-      resposta = await callGemini(historico);
-      provider = 'gemini';
+      resposta = await callClaude(historico);
+      provider = 'claude';
     } catch (error) {
-      logger.warn(`Gemini falhou: ${error.message}`);
+      logger.warn(`Claude falhou: ${error.message}`);
     }
   }
 
