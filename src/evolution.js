@@ -35,8 +35,7 @@ class EvolutionAPI {
 
       logger.info('Evolution API inicializada com sucesso!');
     } catch (error) {
-      const detail = error.response?.data || error.message;
-      logger.error('Erro ao inicializar Evolution (nao-fatal):', JSON.stringify(detail));
+      logger.error(`Erro ao inicializar Evolution (nao-fatal): status=${error.response?.status} body=${JSON.stringify(error.response?.data)} msg=${error.message}`);
       // NAO re-lanca o erro - bot continua rodando sem Evolution
     }
   }
@@ -54,7 +53,7 @@ class EvolutionAPI {
       if (error.response?.status === 409) {
         logger.info('Instância já existe:', INSTANCE_NAME);
       } else {
-        logger.error('Erro createInstance:', error.response?.status, JSON.stringify(error.response?.data || error.message));
+        logger.error(`Erro createInstance: status=${error.response?.status} body=${JSON.stringify(error.response?.data)} msg=${error.message}`);
         throw error;
       }
     }
