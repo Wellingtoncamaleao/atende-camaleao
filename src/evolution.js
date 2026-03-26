@@ -50,8 +50,8 @@ class EvolutionAPI {
       logger.info('Instância criada:', INSTANCE_NAME);
       return response.data;
     } catch (error) {
-      if (error.response?.status === 409) {
-        logger.info('Instância já existe:', INSTANCE_NAME);
+      if (error.response?.status === 409 || error.response?.status === 403) {
+        logger.info('Instancia ja existe:', INSTANCE_NAME);
       } else {
         logger.error(`Erro createInstance: status=${error.response?.status} body=${JSON.stringify(error.response?.data)} msg=${error.message}`);
         throw error;
