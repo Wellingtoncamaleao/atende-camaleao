@@ -20,5 +20,5 @@ ENV EVOLUTION_ENABLED=true
 # Expor porta
 EXPOSE 3000
 
-# Comando
-CMD ["npm", "start"]
+# Comando - node direto (npm nao repassa signals corretamente)
+CMD ["node", "src/index.js"]
