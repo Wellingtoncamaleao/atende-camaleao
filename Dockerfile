@@ -12,6 +12,11 @@ COPY . .
 # Criar diretórios
 RUN mkdir -p logs data
 
+# Defaults para variaveis de ambiente
+ENV BOT_NAME=Vivi
+ENV BOT_PORT=3000
+ENV EVOLUTION_ENABLED=true
+
 # Expor porta
 EXPOSE 3000
 
