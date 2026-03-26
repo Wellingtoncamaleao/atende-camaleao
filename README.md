@@ -53,10 +53,15 @@ docker-compose down
 
 ## 📱 Conectar WhatsApp
 
-### Opção 1: Evolution API (incluída)
-1. Acesse: `http://SEU_IP:8084`
-2. API Key: `vivi-key-2024`
-3. Escaneie o QR Code
+### Opção 1: Evolution API Externa (GestorConecta)
+```bash
+# Configure no .env:
+EVOLUTION_URL=https://evolution.gestorconecta.com.br
+EVOLUTION_API_KEY=sua_api_key_aqui
+
+# Execute:
+node setup-evolution.js
+```
 
 ### Opção 2: Baileys direto
 ```bash
