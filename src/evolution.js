@@ -35,7 +35,8 @@ class EvolutionAPI {
 
       logger.info('Evolution API inicializada com sucesso!');
     } catch (error) {
-      logger.error('Erro ao inicializar Evolution (nao-fatal):', error.message);
+      const detail = error.response?.data || error.message;
+      logger.error('Erro ao inicializar Evolution (nao-fatal):', JSON.stringify(detail));
       // NAO re-lanca o erro - bot continua rodando sem Evolution
     }
   }
@@ -53,6 +54,7 @@ class EvolutionAPI {
       if (error.response?.status === 409) {
         logger.info('Instância já existe:', INSTANCE_NAME);
       } else {
+        logger.error('Erro createInstance:', error.response?.status, JSON.stringify(error.response?.data || error.message));
         throw error;
       }
     }
@@ -60,6 +62,8 @@ class EvolutionAPI {
 
   async setWebhook() {
     try {
+      const webhookUrl = process.env.WEBHOOK_URL || `http://localhost:${process.env.BOT_PORT}/webhook`;
+      logger.info('Configurando webhook para:', webhookUrl);
       await this.api.put(`/webhook/set/${INSTANCE_NAME}`, {
         enabled: true,
         url: process.env.WEBHOOK_URL || `http://localhost:${process.env.BOT_PORT}/webhook`,

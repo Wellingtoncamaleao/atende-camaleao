@@ -56,6 +56,27 @@ app.get('/status', async (req, res) => {
   }
 });
 
+// Debug - diagnostico da conexao Evolution
+app.get('/debug', async (req, res) => {
+  const result = {
+    env: {
+      EVOLUTION_URL: process.env.EVOLUTION_URL || '(nao definida)',
+      EVOLUTION_INSTANCE: process.env.EVOLUTION_INSTANCE || '(nao definida)',
+      EVOLUTION_API_KEY: process.env.EVOLUTION_API_KEY ? '***' + process.env.EVOLUTION_API_KEY.slice(-6) : '(nao definida)',
+      EVOLUTION_ENABLED: process.env.EVOLUTION_ENABLED || '(nao definida)',
+      WEBHOOK_URL: process.env.WEBHOOK_URL || '(nao definida)',
+      BOT_NAME: process.env.BOT_NAME || '(nao definida)',
+    },
+    evolution_status: 'checking...'
+  };
+  try {
+    result.evolution_status = await connectEvolution.getStatus();
+  } catch (error) {
+    result.evolution_status = 'erro: ' + error.message;
+  }
+  res.json(result);
+});
+
 // Setup Evolution sob demanda
 app.post('/setup', async (req, res) => {
   try {
