@@ -110,15 +110,16 @@ class EvolutionAPI {
 
   async sendMessage(to, text) {
     try {
+      // remoteJid ja vem como 5511...@s.whatsapp.net
+      const number = to.replace('@s.whatsapp.net', '').replace('@g.us', '');
       const response = await this.api.post(`/message/sendText/${INSTANCE_NAME}`, {
-        number: to,
-        text: text,
-        delay: 1000
+        number: number,
+        text: text
       });
-      logger.info(`Mensagem enviada para ${to}`);
+      logger.info(`Mensagem enviada para ${number}`);
       return response.data;
     } catch (error) {
-      logger.error('Erro ao enviar mensagem:', error.message);
+      logger.error(`Erro ao enviar mensagem para ${to}:`, error.response?.data || error.message);
       throw error;
     }
   }

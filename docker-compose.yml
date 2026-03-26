@@ -14,8 +14,6 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - EVOLUTION_URL=http://evolution:8080
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-vivi-key-2024}
     volumes:
       - ./src:/app/src
       - ./data:/app/data

@@ -17,6 +17,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const PORT = process.env.BOT_PORT || 3000;
+const EVOLUTION_ENABLED = EVOLUTION_ENABLED || !!process.env.EVOLUTION_URL;
 
 // Rota principal
 app.get('/', (req, res) => {
@@ -97,16 +98,16 @@ app.post('/webhook', async (req, res) => {
     // Processar diferentes formatos
     let message = '';
     let from = '';
-    
-    // Evolution API
+
+    // Evolution API v2 - data eh o objeto da mensagem diretamente
     if (req.body.event === 'messages.upsert') {
-      const msg = req.body.data?.message?.[0];
-      if (!msg || msg.key.fromMe) {
+      const msg = req.body.data;
+      if (!msg || msg.key?.fromMe) {
         return res.json({ status: 'ignored' });
       }
-      message = msg.message?.conversation || 
+      message = msg.message?.conversation ||
                 msg.message?.extendedTextMessage?.text || '';
-      from = msg.key.remoteJid;
+      from = msg.key?.remoteJid;
     }
     // Formato simples
     else if (req.body.message) {
@@ -125,7 +126,7 @@ app.post('/webhook', async (req, res) => {
     const response = await generateResponse(message, from);
     
     // Enviar resposta se Evolution estiver ativa
-    if (process.env.EVOLUTION_ENABLED === 'true' && from) {
+    if (EVOLUTION_ENABLED && from) {
       await sendMessage(from, response);
     }
     
@@ -149,11 +150,21 @@ app.listen(PORT, async () => {
 ========================================
 📍 Porta: ${PORT}
 🤖 Bot: ${process.env.BOT_NAME}
-📱 Evolution: ${process.env.EVOLUTION_ENABLED === 'true' ? 'Ativada' : 'Desativada'}
+📱 Evolution: ${EVOLUTION_ENABLED ? 'Ativada' : 'Desativada'}
 ========================================
   `);
   
-  // Evolution sera inicializada sob demanda (via /setup)
-  // Para evitar crash no startup por falha de conexao
-  logger.info('Use POST /setup para inicializar Evolution API');
+  // Inicializar Evolution automaticamente (sem bloquear startup)
+  if (EVOLUTION_ENABLED) {
+    setTimeout(async () => {
+      try {
+        logger.info('Auto-inicializando Evolution API...');
+        await connectEvolution.initialize();
+        logger.info('Evolution API pronta!');
+      } catch (error) {
+        logger.error('Falha ao auto-inicializar Evolution:', error.message);
+        logger.info('Tente manualmente via POST /setup');
+      }
+    }, 3000);
+  }
 });
