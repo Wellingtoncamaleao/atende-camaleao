@@ -19,22 +19,24 @@ class EvolutionAPI {
   async initialize() {
     try {
       logger.info('Inicializando Evolution API...');
-      
+      logger.info(`URL: ${EVOLUTION_URL}, Instancia: ${INSTANCE_NAME}`);
+
       // Criar instância
       await this.createInstance();
-      
+
       // Configurar webhook
       await this.setWebhook();
-      
+
       // Obter QR Code
       const qr = await this.getQRCode();
       if (qr) {
         logger.info('QR Code disponível! Acesse o painel para escanear.');
       }
-      
+
       logger.info('Evolution API inicializada com sucesso!');
     } catch (error) {
-      logger.error('Erro ao inicializar Evolution:', error.message);
+      logger.error('Erro ao inicializar Evolution (nao-fatal):', error.message);
+      // NAO re-lanca o erro - bot continua rodando sem Evolution
     }
   }
 

@@ -123,7 +123,9 @@ app.listen(PORT, async () => {
   // Conectar Evolution se habilitada
   if (process.env.EVOLUTION_ENABLED === 'true') {
     setTimeout(() => {
-      connectEvolution.initialize();
+      connectEvolution.initialize().catch(err => {
+        logger.error('Falha na inicializacao Evolution (nao-fatal):', err.message);
+      });
     }, 3000);
   }
 });
